@@ -1,0 +1,280 @@
+%%[
+
+/* --------------------------------- */
+/* FUNCTION : GET CAMPAIGN PATH
+/* DESCRIPTION : Assigned correct campaign path   */
+/* --------------------------------- */
+
+Var @campaignPath, @content_params, @content_guids, @ft_v1_guid, @ft_v2_guid, @ft_v3_guid, @ft_v4_guid, @support_guid, @family_guid, @ft_v1, @ft_v2, @ft_v3, @ft_v4, @social_guid, @image_disclaimer_guid, @audience_segment, @plus_one
+
+SET @audience_segment = AttributeValue('HIGH_LEVEL_SEGMENT')
+
+/*  -------------------------------- */
+/* GUID Reference For Below IF Block */
+/*  -------------------------------- */
+
+/*
+Interest Vehicle Priority 1 - Generic
+fb2f6b13-ddee-4bda-9e35-c774125fc9b7
+
+Interest Vehicle Priority 1 - Owner Content Engagers
+75f8ccb2-1cbc-45d3-986d-70487eb4b331
+
+Interest Vehicle Priority 1 - Event Handraisers
+0e0fd944-3f30-4a06-824a-7fa86c590de3
+
+Interest Vehicle Priority 1 - VOI Handraisers
+261a7871-8ec8-4423-8ae9-45dc17d9300d
+
+Interest Vehicle Priority 1 - Cross Brand
+27bdd5b8-7631-41f2-bf59-943ee0a9a4fe
+
+*/
+
+/* --------------------------------- */
+/* Setting FT_V1 guid based on HIGH_LEVEL_SEGMENT Attribute */
+/* --------------------------------- */
+  IF indexOf(@audience_segment, "Handraiser^No VOI Handraiser") > 0 THEN
+      SET @ft_v1_guid = "fb2f6b13-ddee-4bda-9e35-c774125fc9b7"
+  ELSEIF indexOf(@audience_segment, "Owner^In-Market Owner") > 0 THEN
+      SET @ft_v1_guid = "75f8ccb2-1cbc-45d3-986d-70487eb4b331"
+  ELSEIF indexOf(@audience_segment, "BCRM Click^Content Engager") > 0 THEN
+      SET @ft_v1_guid = "fb2f6b13-ddee-4bda-9e35-c774125fc9b7"
+  ELSEIF indexOf(@audience_segment, "Handraiser^Event Handraiser") > 0 THEN
+      SET @ft_v1_guid = "0e0fd944-3f30-4a06-824a-7fa86c590de3"
+  ELSEIF indexOf(@audience_segment, "Lead^Dealer Optins") > 0 THEN
+      SET @ft_v1_guid = "261a7871-8ec8-4423-8ae9-45dc17d9300d"
+  ELSEIF indexOf(@audience_segment, "Lead^Aged Lead") > 0 THEN
+      SET @ft_v1_guid = "261a7871-8ec8-4423-8ae9-45dc17d9300d"
+  ELSEIF indexOf(@audience_segment, "Handraiser^VOI Handraiser") > 0 THEN
+      SET @ft_v1_guid = "261a7871-8ec8-4423-8ae9-45dc17d9300d"
+  ELSEIF indexOf(@audience_segment, "Cross Brand^Cross Brand Toyota to Lexus") > 0 THEN
+      SET @ft_v1_guid = "27bdd5b8-7631-41f2-bf59-943ee0a9a4fe"
+  ELSEIF indexOf(@audience_segment, "Cross Brand^Cross Brand Lexus to Toyota") > 0 THEN
+      SET @ft_v1_guid = "27bdd5b8-7631-41f2-bf59-943ee0a9a4fe"
+  ELSE
+      SET @ft_v1_guid = "fb2f6b13-ddee-4bda-9e35-c774125fc9b7"
+  ENDIF
+
+
+/* --------------------------------- */
+/* Setting FT_V2 guid based on HIGH_LEVEL_SEGMENT Attribute */
+/* --------------------------------- */
+  SET @ft_v2_guid = "11b63d53-c006-47db-8fac-403b071f56ef"
+
+/* --------------------------------- */
+/* Setting FT_V3 guid based on HIGH_LEVEL_SEGMENT Attribute */
+/* --------------------------------- */
+  SET @ft_v3_guid = "2e871a2b-55be-4378-9723-bd5be51ee531"
+
+/* --------------------------------- */
+/* Setting FT_V4 guid based on HIGH_LEVEL_SEGMENT Attribute */
+/* --------------------------------- */
+  SET @ft_v4_guid = "df0f858f-2957-4207-a39d-52ce778a6484"
+  
+/* ---------------------------------- */
+/* Set SALES EVENT Support guid since this is an SE preprocessor */
+/* ---------------------------------- */
+/* Shared - Season of Sophisitication - 2025 */
+SET @support_guid = "deb167a9-5c19-4bdc-9f69-cb1928db8923"
+
+SET @family_guid = "d9a9a6fa-3e8c-4e7b-94f1-9bf3c1c1b823"
+SET @social_guid = "9e8e5a7c-b62e-4cf1-907a-530fe6a1f80f"
+SET @image_disclaimer_guid = "e7772a7f-d3d6-4864-bbef-01f925dc9af9"
+SET @content_guids = CONCAT(@ft_v1_guid,"~",@ft_v2_guid,"~",@ft_v3_guid,"~",@ft_v4_guid,"~",@support_guid,"~",@family_guid,"~",@social_guid,"~",@image_disclaimer_guid)
+
+SET @ft_v1 = AttributeValue('FT_V1')
+SET @ft_v2 = AttributeValue('FT_V2')
+SET @ft_v3 = AttributeValue('FT_V3')
+SET @ft_v4 = AttributeValue('FT_V4')
+
+SET @content_params = CONCAT("&ft_v1=",@ft_v1,"&ft_v2=",@ft_v2,"&ft_v3=",@ft_v3,"&ft_v4=",@ft_v4)
+
+/* --------------------------------- */
+/* FUNCTION : FIRST NAME PROCESSING:
+/* DESCRIPTION : When Long First Name > 12 Chars Set @long_checked_first_name to blank */
+/* --------------------------------- */
+
+  ContentBlockbyKey(CONCAT("shared.",@environment,".check_long_first_name"))
+
+  var @updateFirstName
+
+  SET @updatedFirstName = AttributeValue('FIRST_NAME')
+
+  IF NOT EMPTY(AttributeValue('FIRST_NAME')) THEN 
+  SET @updatedFirstName = CONCAT(', ',@updatedFirstName)
+  ELSE
+  SET @updatedFirstName = ""
+  ENDIF
+
+/* --------------------------------- */
+/* FUNCTION : OW_V1 PROCESSING
+/* DESCRIPTION : SPLIT OW_V1 COLUMN VALUE INTO SEPARATE AMPSCRIPT VARS */
+/* --------------------------------- */
+
+  SET @campaignPath = CONCAT(@base_url, "/templates/render?content=",@content_guids,@content_params)
+
+/* ------------------- */
+/* BUILD CAMPAIGN PATH */
+/* ------------------- */
+
+/* ############ DO NOT TOUCH ANYTHING BELOW THIS LINE ############ */
+
+
+/* REQUEST MAIN EMAIL HTML */
+VAR @email_url, @email_html, @email_html_length, @get_status_html
+SET @email_url = CONCAT(@campaignPath)
+
+/* --------------------------------- */
+/* During Sales Events Add &subjectLine=salesevent_sl and @previewText=salesevent_pt */
+/* or specific versions to be used for the platform to populate the Sales Event version of the SL. */
+/* --------------------------------- */
+SET @email_url=  CONCAT(@email_url,"&subjectLine=salesevent_sl1&previewText=salesevent_pt1")
+
+SET @email_url=  CONCAT(@email_url,"&cb=",@cachebuster)
+SET @email_html = HttpGET(@email_url, false, 1, @get_status_html)
+SET @email_html_length = Length(@email_html) 
+
+/* --------------------------------- */
+/* FUNCTION : GET SUBJECT LINE
+/* DESCRIPTION : Get Subject line from meta tag in html  */
+/* --------------------------------- */
+
+SET @subject_line = Substring(@email_html, 
+                    Add(IndexOf(@email_html, 'name="subject_line"'), 29),
+                    Subtract(IndexOf(Substring(@email_html, Add(IndexOf(@email_html, 'name="subject_line"'), 29)), '>'), 2))
+       
+
+/* -------------------------------------------------- */
+/* -------------------------------------------------- */
+/* Override to prevent FIRST_NAME prepend of DTRSE SL */
+/* -------------------------------------------------- */
+/* -------------------------------------------------- */
+IF indexOf(@subject_line, "Visit the December") == 0 THEN
+
+  IF LENGTH(@long_checked_first_name) > 0 THEN
+    SET @subject_line = CONCAT(AttributeValue('FIRST_NAME'), ', ',@subject_line)
+  ENDIF
+
+ENDIF
+
+/* -------------------------------------------------- */
+/* -------------------------------------------------- */
+/* Override to prevent FIRST_NAME prepend of DTRSE SL UPDATE 26/02/2025 */
+/* -------------------------------------------------- */
+/* -------------------------------------------------- */
+IF indexOf(@subject_line, "The Invitation to Lexus Sales Event") == 0 THEN
+
+  IF LENGTH(@long_checked_first_name) > 0 THEN
+    SET @updatedFirstName = ""
+    SET @subject_line = CONCAT(AttributeValue('FIRST_NAME'), 'TEST , ',@subject_line)
+  ENDIF
+
+ENDIF
+
+
+
+/* Appended First Name - For When First Name Populated at End of Preview Text */
+IF LENGTH(@long_checked_first_name) > 0 THEN
+  SET @email_html = REPLACE(@email_html, '%%APPENDED_FIRST_NAME%%', CONCAT(', ',AttributeValue('FIRST_NAME')))
+ELSE
+  SET @email_html = REPLACE(@email_html, '%%APPENDED_FIRST_NAME%%', '')
+ENDIF
+
+/* ------------------------------------- */
+/* VARS FOR TEST SUBJECT LINE & SEND LOG */
+/* ------------------------------------- */
+VAR @mid, @cid, @jobID
+SET @mid = AttributeValue("mid")
+SET @cid = AttributeValue("cid")
+SET @jobID = AttributeValue("jobid")
+
+/* -------------------------------------- */
+/* MODULE TRACKING                        */
+/* Logs all modules for each recipient    */
+/* -------------------------------------- */
+VAR @content, @splitHtmlTracking Set @content = "" 
+if IndexOf(@email_html,'!~tp~!') > 0 then 
+ Set @splitHtmlTracking = BuildRowsetFromString(@email_html,'!~tp~!') 
+ If IndexOf(Field(Row(@splitHtmlTracking,2),1), 'z1_') > 0 then 
+  Set @content = Field(Row(@splitHtmlTracking,2),1))
+ endif 
+endif 
+
+/*
+var @enc
+SET @enc=EncryptSymmetric(emailaddr, "TRIPLEDES", @null, "InnovyxRapp2013!", @null, "0000000000000000", @null, "00000000000000000000000000000000") 
+  
+  
+  SET @encDealerCode = EncryptSymmetric(@dealerCd, "TRIPLEDES", @null, "InnovyxRapp2013!", @null, "0000000000000000", @null, "00000000000000000000000000000000")
+  SET @encDealerName = EncryptSymmetric(@dealerName, "TRIPLEDES", @null, "InnovyxRapp2013!", @null, "0000000000000000", @null, "00000000000000000000000000000000")
+  SET @encFirstName = EncryptSymmetric(@long_checked_first_name, "TRIPLEDES", @null, "InnovyxRapp2013!", @null, "0000000000000000", @null, "00000000000000000000000000000000")
+  SET @encLastname = EncryptSymmetric(@lastName, "TRIPLEDES", @null, "InnovyxRapp2013!", @null, "0000000000000000", @null, "00000000000000000000000000000000")
+  SET @encZip5 = EncryptSymmetric(@zip, "TRIPLEDES", @null, "InnovyxRapp2013!", @null, "0000000000000000", @null, "00000000000000000000000000000000")
+*/
+
+
+/* Set Encrypted Variable For Unsub Link In Footer */
+VAR @enc, @encDealerCode, @encDealerName, @encFirstName, @encLastname, @encZip5, @base64Enc, @subscriberKey, @base64SubscriberKey
+SET @enc = EncryptSymmetric(emailaddr, "TRIPLEDES", @null, "InnovyxRapp2013!", @null, "0000000000000000", @null, "00000000000000000000000000000000") 
+SET @base64Enc = Base64Encode(emailaddr)
+SET @subscriberKey = AttributeValue("SUBSCRIBER_KEY")
+SET @base64SubscriberKey = Base64Encode(@subscriberKey)
+
+
+/* #################### COMMENT OUT FOR PRE-ATEST ROUNDS. UNCOMMENT FOR NON-PRE-ATEST ROUNDS WHEN TRACKING TURNED ON. #################### */
+
+/* ------------------- */
+/* APPLY LINK TRACKING */
+/* ------------------- */
+IF @linktracking == "true" THEN
+ SET @email_html = Replace(@email_html,'href="http','href="httpgetwrap|http')
+ENDIF 
+
+/* ----------------------------------------------------------- */
+/* POPULATE DEALER INFO                                        */
+/* ----------------------------------------------------------- */
+VAR @dealerPhone, @dealerAddress, @dealerCity, @dealerState, @dealerZip, @dealerName, @lastName, @zip, @dealerURL, @dealerGmapsURL
+SET @dealerName = AttributeValue("DEALER_NAME")
+SET @dealerPhone = AttributeValue("DEALER_PHONE")
+SET @dealerAddress = AttributeValue("DEALER_ADDRESS") 
+SET @dealerCity = AttributeValue("DEALER_CITY")
+SET @dealerState = AttributeValue("DEALER_STATE")
+SET @dealerZip = AttributeValue("DEALER_ZIP")
+SET @lastName = AttributeValue("LAST_NAME")
+SET @zip = AttributeValue("ZIP_CD_5")
+SET @dealerURL = Substring(AttributeValue("DEALER_URL"), 0, Add(IndexOf(AttributeValue("DEALER_URL"), '.com'), 3))
+SET @dealerPhoneLink = IIF(IndexOf(@dealerPhone, '1-') > 0, @dealerPhone, CONCAT('1-', @dealerPhone))
+SET @dealerGmapsURL = CONCAT('https://www.google.com/maps/dir/?api=1&amp;destination=',Replace(CONCAT(Replace(@dealerAddress, '&', '%26'), '+', @dealerCity, '+', @dealerState, '+', @dealerZip), ' ', '+')) 
+
+/* REPLACE INSTEAD OF PULLING IN VARIABLES FOR DEALER URL AND DEALE GMAPS */
+/* THIS IS THE FIX FOR HTTPGETWRAP TO WORK PROPERLY */
+SET @email_html = REPLACE(@email_html, '%%DEALER_URL%%', 'httpgetwrap|%%=RedirectTo(@dealerURL)=%%')
+SET @email_html = Replace(@email_html, '%%DEALER_GMAPS_URL%%', 'httpgetwrap|%%=RedirectTo(@dealerGmapsURL)=%%')
+
+
+/* --------------------------------- */
+/* FUNCTION : GET VEHICLE COPY and body background color
+/* DESCRIPTION : Populates vehicle copy in benefits module and sets body background color  */
+/* --------------------------------- */
+
+ContentBlockbyKey(CONCAT(@environment,".setVehicleSpecs"))
+
+
+/* ------------------------------- */
+/* TEST SUBJECT LINE */
+/* Use For SFMC Preview Type Tests */
+/* ------------------------------- */
+VAR @test_subject_line
+SET @test_subject_line = CONCAT(@environment,' | ',@programName,' | ',@versionName, ' ] ', @subject_line)
+ENDIF 
+
+
+/* ------------------------------- */
+/* REPLACE THE 250ok PATH          */
+/* WITH THE CORRECT CODE SNIPPET   */
+/* ------------------------------- */
+
+SET @PIXEL_250_OK = ContentBlockByKey("df04fe6d-ed22-4dd4-bbec-b069ee964165")
+
+]%%
