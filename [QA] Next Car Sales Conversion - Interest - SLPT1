@@ -1,0 +1,57 @@
+%%[ 
+
+/*
+###################################################
+SET ENVIRONMENT PRIOR TO DEPLOYMENT (dev, qa, prod) 
+################################################### */
+
+VAR @environment, @base_url, @cachebuster, @liveSend
+SET @environment = 'qa'
+SET @linktracking = 'true'
+SET @brand = 'Lexus'
+SET @programName = AttributeValue("CAMPAIGNCODE")
+SET @versionName = AttributeValue("VERSION")
+
+/* SET @cachebuster = "20241118125000" */
+SET @cachebuster = CONCAT(Format(Now(), 'yyMMddhhmmss'), '')
+
+/* Value of "false", will only deploy to test email      */
+/* addresses and fail send on all other email addresses. */
+/* Value of "true", will deploy to all email addresses   */
+/* DO NOT SET TO TRUE FOR TEST WRAPPERS */
+SET @liveSend = false
+
+/*
+###################################################
+Check if current email address is an 
+approved test email if liveSend = false
+################################################### 
+*/
+
+ContentBlockbyKey('shared.validate_email_address')
+
+/*
+###################################################
+SET ENVIRONMENT + OVERRIDE
+IF REGRESSION TEST 
+################################################### */
+
+ContentBlockByKey("next_car.qa.environment")
+ContentBlockByKey("nxtcar_interest.qa.se.slpt1.prepro")
+
+/* ---------------------------------------------- */
+/* TEST SL PREFIX - For Pre-ATEST/ATEST/CTEST */
+/* ---------------------------------------------- */
+
+VAR @sl_prefix, @ctest_sl_prefix, @atest_send_round, @ctest_send_round
+SET @hlseg = AttributeValue('HIGH_LEVEL_SEGMENT')
+
+SET @atest_send_round = '1'
+SET @sl_prefix = CONCAT('[ATEST ',@atest_send_round,' | ',Uppercase(@environment),' | ',@brand,' | Sales Conversion Interest | ',@hlseg, '] ')
+
+SET @ctest_send_round = "1"
+SET @ctest_sl_prefix = CONCAT('[CTEST ',@ctest_send_round,' | ',Uppercase(@environment),' | ',@brand,' | Sales Conversion Interest | ',@hlseg, ']')
+
+]%%
+%%=ContentBlockByKey("nxtcar.verifyhtml")=%%
+
